@@ -10,6 +10,8 @@ require 'gosu'
 require 'gl'
 
 WIDTH, HEIGHT = 600, 600
+# :fullscreen => true
+
 
 module ZOrder
   Background, Stars, Player, UI = *0..3
