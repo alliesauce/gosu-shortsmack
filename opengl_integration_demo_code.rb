@@ -188,7 +188,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
   def initialize
     super WIDTH, HEIGHT
 
-    self.caption = "OpenGL Integration"
+    self.caption = "Operation Shortsmack"
 
     @gl_background = GLBackground.new
 
