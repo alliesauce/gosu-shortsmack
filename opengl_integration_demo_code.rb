@@ -9,8 +9,8 @@ require 'rubygems'
 require 'gosu'
 require 'gl'
 
-WIDTH, HEIGHT = 600, 600
-# :fullscreen => true
+WIDTH, HEIGHT = 1500,900
+# :fullscreen => truemkdir
 
 
 module ZOrder
@@ -27,7 +27,7 @@ class GLBackground
   SCROLLS_PER_STEP = 50
 
   def initialize
-    @image = Gosu::Image.new("media/earth.png", :tileable => true)
+    @image = Gosu::Image.new("media/hacker_code.jpg", :tileable => true)
     @scrolls = 0
     @height_map = Array.new(POINTS_Y) { Array.new(POINTS_X) { rand } }
   end
@@ -52,7 +52,7 @@ class GLBackground
   include Gl
 
   def exec_gl
-    glClearColor(0.0, 0.2, 0.5, 1.0)
+    glClearColor(0.0, 0.0, 0.0, 1.0)
     glClearDepth(0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
@@ -117,7 +117,7 @@ class Player
   attr_reader :score
 
   def initialize(x, y)
-    @image = Gosu::Image.new("media/starfighter.bmp")
+    @image = Gosu::Image.new("media/bryan_icon.bmp")
     @beep = Gosu::Sample.new("media/beep.wav")
     @x, @y = x, y
     @score = 0
@@ -167,7 +167,7 @@ class Star
     @color.red = rand(255 - 40) + 40
     @color.green = rand(255 - 40) + 40
     @color.blue = rand(255 - 40) + 40
-    @x = rand * 800
+    @x = rand * 1500
     @y = 0
   end
 
@@ -178,9 +178,9 @@ class Star
 
   def update
     # Move towards bottom of screen
-    @y += 3
+    @y += 5
     # Return false when out of screen (gets deleted then)
-    @y < 650
+    @y < 950
   end
 end
 
@@ -212,7 +212,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @gl_background.scroll
 
-    @stars.push(Star.new(@star_anim)) if rand(20) == 0
+# rand(number) controls how many stars fall at a time
+    @stars.push(Star.new(@star_anim)) if rand(2) == 0
   end
 
   def draw
