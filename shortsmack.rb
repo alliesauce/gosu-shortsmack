@@ -117,7 +117,7 @@ class Player
     @beep = Gosu::Sample.new("media/beep.wav")
     @x, @y = x, y
     @score = 0
-    @lives = 3
+    @lives = 5
     @alive = true
   end
 
@@ -155,7 +155,7 @@ class Player
 
   def dead?
     !@alive
-    return @lives == 0
+    return @lives <= 0
   end
 
   def warp(x=750,y=450)
@@ -166,12 +166,15 @@ class Player
 
   def collect_juices(juices)
     juices.reject! do |juice|
-      if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
-        @score += 10
-        @beep.play
-        true
-      else
-        false
+      #stops player from being able to collect when dead
+      if @alive
+        if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
+          @lives += 1
+          @beep.play
+          true
+        else
+          false
+        end
       end
     end
   end
@@ -179,14 +182,17 @@ class Player
   def avoid_questions(questions)
     @player = self
     questions.reject! do |question|
-      if Gosu::distance(@x, @y, question.x, question.y) < 150 then
-        @score -= 50
-        @player.kill
-        @lives -= 1
-        @beep.play
-        true
-      else
-        false
+      #stops player from being able to collect when dead
+      if @alive
+        if Gosu::distance(@x, @y, question.x, question.y) < 150 then
+          # @score -= 50
+          @player.kill
+          # @lives -= 1
+          @beep.play
+          true
+        else
+          false
+        end
       end
     end
   end
@@ -267,7 +273,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     super WIDTH, HEIGHT
     self.caption = "Operation Shortsmack"
     @gl_background = GLBackground.new
-    @life_image = Gosu::Image.new(self, "media/bryan.bmp", false)
+    @life_image = Gosu::Image.new("media/bryan.bmp")
     @game_in_progress = false
     @font = Gosu::Font.new(20)
     setup_game
@@ -337,24 +343,28 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     end
 
     @player.draw unless @player.dead?
-    @juices.each { |juice| juice.draw }
-    @questions.each { |question| question.draw }
-    draw_lives
-    @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
-    # @font.draw("#{@timer.countdown} Seconds To Go", 1000, 20, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    @juices.each { |juice| juice.draw } unless @player.dead?
+    @questions.each { |question| question.draw } unless @player.dead?
+    # draw_lives
+    @font.draw("Lives: #{@player.lives}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    # @player.lives.times do |x|
+    #   x = 10
+    #   @life_image.draw(x, 10, ZOrder::UI)
+    #   x += 20
+    # end
 
     @gl_background.draw(ZOrder::Background)
     # @life_image.draw(self, "media/bryan.bmp", false)
   end
 
-  def draw_lives
-    return unless @player.lives > 0
-    x = 10
-    @player.lives.times do
-      @life_image.draw(x, 40, 0)
-      x += 20
-    end
-  end
+  # def draw_lives
+  #   return unless @player.lives > 0
+  #   x = 10
+  #   @player.lives.times do
+  #     @life_image.draw(x, 40, 0)
+  #     x += 20
+  #   end
+  # end
 end #class OpenGL
 
 
