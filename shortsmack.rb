@@ -359,7 +359,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
       x = 10
       @player.lives.times do
         @life_image.draw(x, 40, 0)
-        x += 20
+        x += 40
       end
     end
   end
