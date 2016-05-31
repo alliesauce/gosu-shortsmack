@@ -281,9 +281,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
   def setup_game
     @player = Player.new(400, 500)
-
+    @score = 0
     @juice= Gosu::Image::load_tiles("media/juice_large.png", 100, 100)
-
     @juices = Array.new
     @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
     @questions = Array.new
@@ -319,7 +318,6 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 # rand(number) controls how many juices and questions fall at a time
     @juices.push(Juice.new(@juice)) if rand(250) == 0
     @questions.push(Question.new(@question)) if rand(40) == 0
-
   end
 
   def control_player
@@ -342,16 +340,13 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
       #sleep
     end
 
+    @score += 1 unless @player.dead?
     @player.draw unless @player.dead?
     @juices.each { |juice| juice.draw } unless @player.dead?
     @questions.each { |question| question.draw } unless @player.dead?
     # draw_lives
     @font.draw("Lives: #{@player.lives}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
-    # @player.lives.times do |x|
-    #   x = 10
-    #   @life_image.draw(x, 10, ZOrder::UI)
-    #   x += 20
-    # end
+    @font.draw("Score: #{@score}", 1000, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
 
     @gl_background.draw(ZOrder::Background)
     # @life_image.draw(self, "media/bryan.bmp", false)
