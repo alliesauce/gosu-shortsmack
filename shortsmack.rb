@@ -1,20 +1,15 @@
 # Encoding: UTF-8
 
-# The tutorial game over a landscape rendered with OpenGL.
-# Basically shows how arbitrary OpenGL calls can be put into
-# the block given to Window#gl, and that Gosu Images can be
-# used as textures using the gl_tex_info call.
-
 require 'rubygems'
 require 'gosu'
 require 'gl'
 
 WIDTH, HEIGHT = 1500,900
-# :fullscreen => truemkdir
+# :fullscreen => true
 
 
 module ZOrder
-  Background, Juices, Player, UI = *0..3
+  Background, Juices, Questions, Player, UI = *0..4
 end
 
 # The only really new class here.
@@ -124,11 +119,15 @@ class Player
   end
 
   def move_left
-    @x = [@x - Speed, 0].max
+    @x = [@x - Speed, WIDTH].min
+    @x %= 1500
+    @y %= 900
   end
 
   def move_right
     @x = [@x + Speed, WIDTH].min
+    @x %= 1500
+    @y %= 900
   end
 
   def accelerate
@@ -145,7 +144,7 @@ class Player
 
   def collect_juices(juices)
     juices.reject! do |juice|
-      if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
+      if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
         @score += 10
         @beep.play
         true
@@ -154,7 +153,20 @@ class Player
       end
     end
   end
-end
+
+  def avoid_questions(questions)
+    questions.reject! do |question|
+      if Gosu::distance(@x, @y, question.x, question.y) < 100 then
+        @score -= 50
+        @beep.play
+        true
+      else
+        false
+      end
+    end
+  end
+end # end class Player
+
 
 # Also taken from the tutorial, but drawn with draw_rot and an increasing angle
 # for extra rotation coolness!
@@ -172,7 +184,7 @@ class Juice
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 250 % @animation.size];
+    img = @animation[Gosu::milliseconds / 150 % @animation.size];
     img.draw_rot(@x, @y, ZOrder::Juices, @y, 0.5, 0.5, 1, 1, @color, :add)
   end
 
@@ -184,6 +196,27 @@ class Juice
   end
 end
 
+class Question
+  attr_reader :x, :y, :angle
+
+  def initialize(image)
+    @image = Gosu::Image.new("media/wat.png")
+    @x = rand * 1500
+    @y = 0
+    @angle = rand(360)
+  end
+
+  def draw
+    @image.draw_rot(@x, @y, ZOrder::Questions, @angle)
+  end
+
+  def update
+    @y += 5
+    @y < 950
+  end
+end
+
+
 class OpenGLIntegration < (Example rescue Gosu::Window)
   def initialize
     super WIDTH, HEIGHT
@@ -193,9 +226,12 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @gl_background = GLBackground.new
 
     @player = Player.new(400, 500)
-# changed
+
     @juice_anim = Gosu::Image::load_tiles("media/juice.png", 50, 50)
     @juices = Array.new
+
+    @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
+    @questions = Array.new
 
     @font = Gosu::Font.new(20)
   end
@@ -210,16 +246,21 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @juices.reject! { |juice| !juice.update }
 
+    @player.avoid_questions(@questions)
+
+    @questions.reject! { |question| !question.update }
+
     @gl_background.scroll
 
-# rand(number) controls how many juices fall at a time
-# changed
-    @juices.push(Juice.new(@juice_anim)) if rand(300) == 0
+# rand(number) controls how many juices and questions fall at a time
+    @juices.push(Juice.new(@juice_anim)) if rand(150) == 0
+    @questions.push(Question.new(@question)) if rand(50) == 0
   end
 
   def draw
     @player.draw
     @juices.each { |juice| juice.draw }
+    @questions.each { |question| question.draw }
     @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
     @gl_background.draw(ZOrder::Background)
   end
