@@ -1,20 +1,15 @@
 # Encoding: UTF-8
 
-# The tutorial game over a landscape rendered with OpenGL.
-# Basically shows how arbitrary OpenGL calls can be put into
-# the block given to Window#gl, and that Gosu Images can be
-# used as textures using the gl_tex_info call.
-
 require 'rubygems'
 require 'gosu'
 require 'gl'
 
 WIDTH, HEIGHT = 1500,900
-# :fullscreen => truemkdir
+# :fullscreen => true
 
 
 module ZOrder
-  Background, Stars, Player, UI = *0..3
+  Background, Stars, Questions, Player, UI = *0..4
 end
 
 # The only really new class here.
@@ -158,7 +153,20 @@ class Player
       end
     end
   end
-end
+
+  def avoid_questions(questions)
+    questions.reject! do |question|
+      if Gosu::distance(@x, @y, question.x, question.y) < 35 then
+        @score -= 50
+        @beep.play
+        true
+      else
+        false
+      end
+    end
+  end
+end # end class Player
+
 
 # Also taken from the tutorial, but drawn with draw_rot and an increasing angle
 # for extra rotation coolness!
@@ -188,6 +196,27 @@ class Star
   end
 end
 
+class Question
+  attr_reader :x, :y
+
+  def initialize(animation)
+    @animation = animation
+    @x = rand * 1500
+    @y = 0
+  end
+
+  def draw
+    img = @animation[Gosu::milliseconds / 100 % @animation.size];
+    img.draw_rot(@x, @y, ZOrder::Questions, @y, 0.5, 0.5, 1, 1)
+  end
+
+  def update
+    @y += 5
+    @y < 950
+  end
+end
+
+
 class OpenGLIntegration < (Example rescue Gosu::Window)
   def initialize
     super WIDTH, HEIGHT
@@ -200,6 +229,9 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @star_anim = Gosu::Image::load_tiles("media/star.png", 25, 25)
     @stars = Array.new
+
+    @question_anim = Gosu::Image::load_tiles("media/gem.png", 25, 25)
+    @questions = Array.new
 
     @font = Gosu::Font.new(20)
   end
@@ -214,15 +246,21 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @stars.reject! { |star| !star.update }
 
+    @player.avoid_questions(@questions)
+
+    @questions.reject! { |question| !question.update }
+
     @gl_background.scroll
 
-# rand(number) controls how many stars fall at a time
+# rand(number) controls how many stars and questions fall at a time
     @stars.push(Star.new(@star_anim)) if rand(2) == 0
+    @questions.push(Question.new(@question_anim)) if rand(2) == 0
   end
 
   def draw
     @player.draw
     @stars.each { |star| star.draw }
+    @questions.each { |question| question.draw }
     @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
     @gl_background.draw(ZOrder::Background)
   end
