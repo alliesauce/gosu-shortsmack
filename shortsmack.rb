@@ -9,7 +9,7 @@ WIDTH, HEIGHT = 1500,900
 
 
 module ZOrder
-  Background, Juices, Questions, Player, UI = *0..4
+  Background, Questions, Juices, Player, UI = *0..5
 end
 
 # The only really new class here.
@@ -114,7 +114,8 @@ class Player
 
   def initialize(x, y)
     @image = Gosu::Image.new("media/bryan.bmp")
-    @beep = Gosu::Sample.new("media/beep.wav")
+    @rooster = Gosu::Sample.new("media/rooster.wav")
+    @pain = Gosu::Sample.new("media/pain.wav")
     @x, @y = x, y
     @score = 0
     @lives = 5
@@ -170,8 +171,8 @@ class Player
       if @alive
         if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
           @lives += 1
-          @beep.play
-          true
+          @rooster.play
+           true
         else
           false
         end
@@ -188,7 +189,7 @@ class Player
           # @score -= 50
           @player.kill
           # @lives -= 1
-          @beep.play
+          @pain.play
           true
         else
           false
@@ -334,9 +335,9 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
   def draw
 
     if @player.lives <= 0
-      @font.draw("GAME OVER", 700, 150, 50, 2.0, 2.0, 0xffffffff)
+      @font.draw("BRYAN I THOUGHT YOU WERE A WIZARD", 400, 150, 50, 2.0, 2.0, 0xffffffff)
       # @font.draw("press 'r' to restart", 700, 320, 50, 1, 1, 0xffffffff)
-      @font.draw("press 'q' to quit", 700, 345, 50, 1, 1, 0xffffffff)
+      @font.draw("press 'q' to quit", 675, 345, 50, 1, 1, 0xffffffff)
       #sleep
     end
 
@@ -346,7 +347,10 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @questions.each { |question| question.draw } unless @player.dead?
     # draw_lives
     @font.draw("Lives: #{@player.lives}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
-    @font.draw("Score: #{@score}", 1000, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    @seconds = @score / 60
+    if @player.dead?
+      @font.draw("You died in #{@seconds} seconds", 600, 250, 50, 1.5, 1.5, Gosu::Color.argb(0xff_ff0000))
+    end
 
     @gl_background.draw(ZOrder::Background)
     # @life_image.draw(self, "media/bryan.bmp", false)
@@ -358,7 +362,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
   #   @player.lives.times do
   #     @life_image.draw(x, 40, 0)
   #     x += 20
-  #   end
+  #   en
   # end
 end #class OpenGL
 
