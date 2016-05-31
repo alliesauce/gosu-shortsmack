@@ -3,28 +3,30 @@
 require 'rubygems'
 require 'gosu'
 require 'gl'
+# require 'timers'
 
 WIDTH, HEIGHT = 1500,900
 # :fullscreen => true
 
 
 module ZOrder
-  Background, Juices, Questions, Player, UI = *0..4
+  Background, Questions, Juices, Player, UI = *0..5
 end
 
 # The only really new class here.
 # Draws a scrolling, repeating texture with a randomized height map.
 class GLBackground
   # Height map size
-  POINTS_X = 7
-  POINTS_Y = 7
+  POINTS_X = 12
+  POINTS_Y = 12
   # Scrolling speed
   SCROLLS_PER_STEP = 50
 
   def initialize
-    @image = Gosu::Image.new("media/hacker_code.jpg", :tileable => true)
+    @image = Gosu::Image.new("media/hacker_code_blue.jpg", :tileable => true)
     @scrolls = 0
     @height_map = Array.new(POINTS_Y) { Array.new(POINTS_X) { rand } }
+    # @life_image = Gosu::Image.new(self, "media/bryan.bmp", false)
   end
 
   def scroll
@@ -109,13 +111,16 @@ end
 class Player
   Speed = 7
 
-  attr_reader :score
+  attr_accessor :x, :y, :angle, :lives, :score
 
   def initialize(x, y)
     @image = Gosu::Image.new("media/bryan.bmp")
-    @beep = Gosu::Sample.new("media/beep.wav")
+    @thankyou = Gosu::Sample.new("media/audio_formats/thankyou.wav")
+    @becoss = Gosu::Sample.new("media/audio_formats/becoss.wav")
     @x, @y = x, y
     @score = 0
+    @lives = 5
+    @alive = true
   end
 
   def move_left
@@ -142,56 +147,78 @@ class Player
     @image.draw(@x - @image.width / 2, @y - @image.height / 2, ZOrder::Player)
   end
 
+  #When a player dies, we subtract a life, then warp them back to the middle of the screen, towards the bottom.
+  def kill
+    @lives -= 1
+    @alive = false
+    return if @lives <= 0
+    warp
+  end
+
+  def dead?
+    !@alive
+    return @lives <= 0
+  end
+
+  def warp(x=750,y=800)
+    # @velocity_x = @velocity_y = @angle = 0.0
+    @x, @y = x, y
+    @alive = true
+  end
+
   def collect_juices(juices)
     juices.reject! do |juice|
-      if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
-        @score += 10
-        @beep.play
-        true
-      else
-        false
+      #stops player from being able to collect when dead
+      if @alive
+        if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
+          @lives += 1
+          @thankyou.play(volume = 1, speed = 1, looping = false)
+           true
+        else
+          false
+        end
       end
     end
   end
 
   def avoid_questions(questions)
+    @player = self
     questions.reject! do |question|
-      if Gosu::distance(@x, @y, question.x, question.y) < 100 then
-        @score -= 50
-        @beep.play
-        true
-      else
-        false
+      #stops player from being able to collect when dead
+      if @alive
+        if Gosu::distance(@x, @y, question.x, question.y) < 150 then
+          # @score -= 50
+          @player.kill
+          # @lives -= 1
+          @becoss.play(volume = 1, speed = 1, looping = false)
+          true
+        else
+          false
+        end
       end
     end
   end
+
 end # end class Player
 
 
-# Also taken from the tutorial, but drawn with draw_rot and an increasing angle
-# for extra rotation coolness!
+# Also taken from the tutorial, but drawn with draw_rot and an increasing angle for extra rotation coolness!
 class Juice
-  attr_reader :x, :y
+  attr_reader :x, :y, :angle
 
-  def initialize(animation)
-    @animation = animation
-    @color = Gosu::Color.new(0xff_000000)
-    @color.red = rand(255 - 40) + 40
-    @color.green = rand(255 - 40) + 40
-    @color.blue = rand(255 - 40) + 40
+  def initialize(image)
+    @image = Gosu::Image.new("media/juice_large.png")
     @x = rand * 1500
     @y = 0
+    @angle = rand(360)
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 150 % @animation.size];
-    img.draw_rot(@x, @y, ZOrder::Juices, @y, 0.5, 0.5, 1, 1, @color, :add)
+    @image.draw_rot(@x, @y, ZOrder::Juices, @angle)
   end
 
   def update
-    # Move towards bottom of screen
-    @y += 5
-    # Return false when out of screen (gets deleted then)
+    @y += 10
     @y < 950
   end
 end
@@ -216,32 +243,72 @@ class Question
   end
 end
 
-
-class OpenGLIntegration < (Example rescue Gosu::Window)
-  def initialize
-    super WIDTH, HEIGHT
-
-    self.caption = "Operation Shortsmack"
-
-    @gl_background = GLBackground.new
-
-    @player = Player.new(400, 500)
-
-    @juice_anim = Gosu::Image::load_tiles("media/juice.png", 50, 50)
-    @juices = Array.new
-
-    @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
-    @questions = Array.new
-
-    @font = Gosu::Font.new(20)
+class Timer
+  attr_reader :minutes
+  attr_reader :seconds
+  def initialize(window)
+    @minutes = 0
+    @seconds = 0
+    @last_time = Gosu::milliseconds()
   end
 
   def update
-    @player.move_left if Gosu::button_down? Gosu::KbLeft or Gosu::button_down? Gosu::GpLeft
-    @player.move_right if Gosu::button_down? Gosu::KbRight or Gosu::button_down? Gosu::GpRight
-    @player.accelerate if Gosu::button_down? Gosu::KbUp or Gosu::button_down? Gosu::GpUp
-    @player.brake if Gosu::button_down? Gosu::KbDown or Gosu::button_down? Gosu::GpDown
+    if (Gosu::milliseconds - @last_time) / 1000 == 1
+      @seconds += 1
+      @last_time = Gosu::milliseconds()
+    end
+    if @seconds > 59
+      @seconds = 0
+      @minutes += 1
+    end
+    if @minutes > 59
+      @minutes = 0
+    end
+  end
+end #end class Timer
 
+class OpenGLIntegration < (Example rescue Gosu::Window)
+  attr_reader :timer
+
+  def initialize
+    super WIDTH, HEIGHT
+    self.caption = "Operation Shortsmack"
+    @gl_background = GLBackground.new
+    @life_image = Gosu::Image.new("media/bryan.bmp")
+    @game_in_progress = false
+    @font = Gosu::Font.new(20)
+    setup_game
+    @timer = Timer.new(self)
+  end
+
+  def setup_game
+    @player = Player.new(400, 500)
+    @score = 0
+    @juice= Gosu::Image::load_tiles("media/juice_large.png", 100, 100)
+    @juices = Array.new
+    @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
+    @questions = Array.new
+    # @font = Gosu::Font.new(20)
+    @game_in_progress = true
+    @bgmusic = Gosu::Sample.new("media/audio_formats/smash.mp3")
+    @bgmusic.play(volume = 0.5, speed = 1, looping = true)
+  end
+
+    def update
+      if button_down? Gosu::KbQ
+      close
+    end
+
+    def button_down(id)
+      self.close if id == Gosu::Button::KbEscape
+      self.setup_game if id == Gosu::Button::KbR
+    end
+
+    if button_down? Gosu::KbS
+      setup_game unless @game_in_progress
+    end
+
+    control_player unless @player.dead?
     @player.collect_juices(@juices)
 
     @juices.reject! { |juice| !juice.update }
@@ -252,18 +319,91 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @gl_background.scroll
 
-# rand(number) controls how many juices and questions fall at a time
-    @juices.push(Juice.new(@juice_anim)) if rand(150) == 0
-    @questions.push(Question.new(@question)) if rand(50) == 0
+    @timer.update
+
+    # rand(number) controls how many juices and questions fall at a time
+    @juices.push(Juice.new(@juice)) if rand(150) == 0
+    @questions.push(Question.new(@question)) if rand(25) == 0
+  end
+
+  def control_player
+    @player.move_left if Gosu::button_down? Gosu::KbLeft or Gosu::button_down? Gosu::GpLeft
+    @player.move_right if Gosu::button_down? Gosu::KbRight or Gosu::button_down? Gosu::GpRight
+    @player.accelerate if Gosu::button_down? Gosu::KbUp or Gosu::button_down? Gosu::GpUp
+    @player.brake if Gosu::button_down? Gosu::KbDown or Gosu::button_down? Gosu::GpDown
+  end
+
+  def end_game
+    close if Gosu::button_down? Gosu::KbQ or Gosu::button_down? Gosu:: GpQ
   end
 
   def draw
-    @player.draw
-    @juices.each { |juice| juice.draw }
-    @questions.each { |question| question.draw }
-    @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+
+    if @player.lives <= 0
+      @font.draw("BRYAN I THOUGHT YOU WERE A WIZARD", 400, 150, 50, 2.0, 2.0, 0xffffffff)
+      @font.draw("Press 'r' to Try Again", 655, 320, 50, 1, 1, 0xffffffff)
+      @font.draw("Press 'q' to Quit", 675, 345, 50, 1, 1, 0xffffffff)
+    end
+
+    @score += 1 unless @player.dead?
+    @player.draw unless @player.dead?
+    @juices.each { |juice| juice.draw } unless @player.dead?
+    @questions.each { |question| question.draw } unless @player.dead?
+    # draw_lives
+    # @font.draw("Lives: #{@player.lives}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    @seconds = @score / 60
+    if @player.dead?
+      @font.draw("You died in #{@seconds} seconds", 600, 250, 50, 1.5, 1.5, Gosu::Color.argb(0xff_ff0000))
+    end
+
     @gl_background.draw(ZOrder::Background)
+    # @life_image.draw(self, "media/bryan.bmp", false)
+
+    if @player.lives > 0
+      x = 10
+      @player.lives.times do
+        @life_image.draw(x, 40, 0)
+        x += 40
+      end
+    end
+  end
+end #class OpenGL
+
+class Window_PlayTime < OpenGLIntegration
+
+  def initialize(window, x, y, z)
+    super(window, x, y, 160, 70, 10)
+    @window = window
+    @font = Font.new(window ,@window.initial.font_name, @window.initial.font_size)
+    # colors
+  end
+
+  def adapt_time
+    if @window.timer.minutes < 10
+      @minutes_display = "0" + @window.timer.minutes.to_s
+    else
+      @minutes_display = @window.timer.minutes.to_s
+    end
+    if @window.timer.seconds < 10
+      @seconds_display = "0" + @window.timer.seconds.to_s
+    else
+      @seconds_display = @window.timer.seconds.to_s
+    end
+  end
+
+  def update
+    adapt_time
+    self.draw
+  end
+
+  def draw
+    self.drawBox(@x, @y, @width, @height, @z)
+    @font.draw("Play Time:", self.x+20, self.y+10, @z, 1, 1, @blue_text)
+    @font.draw_rel(@hours_display+":"+@minutes_display+":"+@seconds_display, self.x + @width - 15, self.y + 50, @z, 1.0, 0.5)
   end
 end
 
+
+
 OpenGLIntegration.new.show if __FILE__ == $0
+

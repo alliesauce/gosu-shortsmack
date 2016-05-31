@@ -145,7 +145,7 @@ class Player
 
   def collect_juices(juices)
     juices.reject! do |juice|
-      if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
+      if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
         @score += 10
         @beep.play
         true
@@ -172,7 +172,7 @@ class Juice
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 150 % @animation.size];
+    img = @animation[Gosu::milliseconds / 250 % @animation.size];
     img.draw_rot(@x, @y, ZOrder::Juices, @y, 0.5, 0.5, 1, 1, @color, :add)
   end
 
@@ -193,7 +193,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @gl_background = GLBackground.new
 
     @player = Player.new(400, 500)
-
+# changed
     @juice_anim = Gosu::Image::load_tiles("media/juice.png", 50, 50)
     @juices = Array.new
 
@@ -213,7 +213,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @gl_background.scroll
 
 # rand(number) controls how many juices fall at a time
-    @juices.push(Juice.new(@juice_anim)) if rand(150) == 0
+# changed
+    @juices.push(Juice.new(@juice_anim)) if rand(300) == 0
   end
 
   def draw
