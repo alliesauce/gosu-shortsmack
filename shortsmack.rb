@@ -197,17 +197,17 @@ class Star
 end
 
 class Question
-  attr_reader :x, :y
+  attr_reader :x, :y, :angle
 
-  def initialize(animation)
-    @animation = animation
+  def initialize(image)
+    @image = Gosu::Image.new("media/wat.png")
     @x = rand * 1500
     @y = 0
+    @angle = rand(360)
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 100 % @animation.size];
-    img.draw_rot(@x, @y, ZOrder::Questions, @y, 0.5, 0.5, 1, 1)
+    @image.draw_rot(@x, @y, ZOrder::Questions, @angle)
   end
 
   def update
@@ -230,7 +230,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @star_anim = Gosu::Image::load_tiles("media/star.png", 25, 25)
     @stars = Array.new
 
-    @question_anim = Gosu::Image::load_tiles("media/gem.png", 25, 25)
+    @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
     @questions = Array.new
 
     @font = Gosu::Font.new(20)
@@ -254,7 +254,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
 # rand(number) controls how many stars and questions fall at a time
     @stars.push(Star.new(@star_anim)) if rand(2) == 0
-    @questions.push(Question.new(@question_anim)) if rand(2) == 0
+    @questions.push(Question.new(@question)) if rand(2) == 0
   end
 
   def draw
