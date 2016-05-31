@@ -14,7 +14,7 @@ WIDTH, HEIGHT = 1500,900
 
 
 module ZOrder
-  Background, Stars, Player, UI = *0..3
+  Background, Juices, Player, UI = *0..3
 end
 
 # The only really new class here.
@@ -143,9 +143,9 @@ class Player
     @image.draw(@x - @image.width / 2, @y - @image.height / 2, ZOrder::Player)
   end
 
-  def collect_stars(stars)
-    stars.reject! do |star|
-      if Gosu::distance(@x, @y, star.x, star.y) < 35 then
+  def collect_juices(juices)
+    juices.reject! do |juice|
+      if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
         @score += 10
         @beep.play
         true
@@ -158,7 +158,7 @@ end
 
 # Also taken from the tutorial, but drawn with draw_rot and an increasing angle
 # for extra rotation coolness!
-class Star
+class Juice
   attr_reader :x, :y
 
   def initialize(animation)
@@ -172,8 +172,8 @@ class Star
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 100 % @animation.size];
-    img.draw_rot(@x, @y, ZOrder::Stars, @y, 0.5, 0.5, 1, 1, @color, :add)
+    img = @animation[Gosu::milliseconds / 150 % @animation.size];
+    img.draw_rot(@x, @y, ZOrder::Juices, @y, 0.5, 0.5, 1, 1, @color, :add)
   end
 
   def update
@@ -194,8 +194,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @player = Player.new(400, 500)
 
-    @star_anim = Gosu::Image::load_tiles("media/star.png", 25, 25)
-    @stars = Array.new
+    @juice_anim = Gosu::Image::load_tiles("media/juice.png", 50, 50)
+    @juices = Array.new
 
     @font = Gosu::Font.new(20)
   end
@@ -206,19 +206,19 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @player.accelerate if Gosu::button_down? Gosu::KbUp or Gosu::button_down? Gosu::GpUp
     @player.brake if Gosu::button_down? Gosu::KbDown or Gosu::button_down? Gosu::GpDown
 
-    @player.collect_stars(@stars)
+    @player.collect_juices(@juices)
 
-    @stars.reject! { |star| !star.update }
+    @juices.reject! { |juice| !juice.update }
 
     @gl_background.scroll
 
-# rand(number) controls how many stars fall at a time
-    @stars.push(Star.new(@star_anim)) if rand(2) == 0
+# rand(number) controls how many juices fall at a time
+    @juices.push(Juice.new(@juice_anim)) if rand(150) == 0
   end
 
   def draw
     @player.draw
-    @stars.each { |star| star.draw }
+    @juices.each { |juice| juice.draw }
     @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
     @gl_background.draw(ZOrder::Background)
   end
