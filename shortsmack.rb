@@ -114,8 +114,8 @@ class Player
 
   def initialize(x, y)
     @image = Gosu::Image.new("media/bryan.bmp")
-    @rooster = Gosu::Sample.new("media/rooster.wav")
-    @pain = Gosu::Sample.new("media/pain.wav")
+    @rooster = Gosu::Sample.new("media/audio_formats/thankyou.wav")
+    @becoss = Gosu::Sample.new("media/audio_formats/becoss.wav")
     @x, @y = x, y
     @score = 0
     @lives = 5
@@ -189,7 +189,7 @@ class Player
           # @score -= 50
           @player.kill
           # @lives -= 1
-          @pain.play
+          @becoss.play
           true
         else
           false
@@ -318,7 +318,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
 # rand(number) controls how many juices and questions fall at a time
     @juices.push(Juice.new(@juice)) if rand(250) == 0
-    @questions.push(Question.new(@question)) if rand(40) == 0
+    @questions.push(Question.new(@question)) if rand(25) == 0
   end
 
   def control_player
