@@ -23,7 +23,7 @@ class GLBackground
   SCROLLS_PER_STEP = 50
 
   def initialize
-    @image = Gosu::Image.new("media/hacker_code_blue.jpg", :tileable => true)
+    @image = Gosu::Image.new("media/image_formats/hacker_code_blue.jpg", :tileable => true)
     @scrolls = 0
     @height_map = Array.new(POINTS_Y) { Array.new(POINTS_X) { rand } }
     # @life_image = Gosu::Image.new(self, "media/bryan.bmp", false)
@@ -114,7 +114,7 @@ class Player
   attr_accessor :x, :y, :angle, :lives, :score
 
   def initialize(x, y)
-    @image = Gosu::Image.new("media/bryan.bmp")
+    @image = Gosu::Image.new("media/image_formats/bryan.bmp")
     @thankyou = Gosu::Sample.new("media/audio_formats/thankyou.wav")
     @becoss = Gosu::Sample.new("media/audio_formats/becoss.wav")
     @x, @y = x, y
@@ -207,7 +207,7 @@ class Juice
   attr_reader :x, :y, :angle
 
   def initialize(image)
-    @image = Gosu::Image.new("media/juice_large.png")
+    @image = Gosu::Image.new("media/image_formats/juice_large.png")
     @x = rand * 1500
     @y = 0
     @angle = rand(360)
@@ -227,7 +227,7 @@ class Question
   attr_reader :x, :y, :angle
 
   def initialize(image)
-    @image = Gosu::Image.new("media/wat.png")
+    @image = Gosu::Image.new("media/image_formats/wat.png")
     @x = rand * 1500
     @y = 0
     @angle = rand(360)
@@ -274,7 +274,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     super WIDTH, HEIGHT
     self.caption = "Operation Shortsmack"
     @gl_background = GLBackground.new
-    @life_image = Gosu::Image.new("media/bryan.bmp")
+    @life_image = Gosu::Image.new("media/image_formats/bryan.bmp")
     @game_in_progress = false
     @font = Gosu::Font.new(20)
     setup_game
@@ -284,14 +284,14 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
   def setup_game
     @player = Player.new(400, 500)
     @score = 0
-    @juice= Gosu::Image::load_tiles("media/juice_large.png", 100, 100)
+    @juice= Gosu::Image::load_tiles("media/image_formats/juice_large.png", 100, 100)
     @juices = Array.new
-    @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
+    @question = Gosu::Image::load_tiles("media/image_formats/wat.png", 250, 250)
     @questions = Array.new
     # @font = Gosu::Font.new(20)
     @game_in_progress = true
     @bgmusic = Gosu::Sample.new("media/audio_formats/smash.mp3")
-    @bgmusic.play(volume = 0.5, speed = 1, looping = true) unless @player.dead?
+    @bgmusic.play(volume = 0.5, speed = 1, looping = true)
   end
 
     def update
