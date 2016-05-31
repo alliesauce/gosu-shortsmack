@@ -14,15 +14,15 @@ WIDTH, HEIGHT = 1500,900
 
 
 module ZOrder
-  Background, Juice, Player, UI = *0..3
+  Background, Juices, Player, UI = *0..3
 end
 
 # The only really new class here.
 # Draws a scrolling, repeating texture with a randomized height map.
 class GLBackground
   # Height map size
-  POINTS_X = 13
-  POINTS_Y = 13
+  POINTS_X = 7
+  POINTS_Y = 7
   # Scrolling speed
   SCROLLS_PER_STEP = 50
 
@@ -145,9 +145,8 @@ class Player
 
   def collect_juices(juices)
     juices.reject! do |juice|
-      #yk < # controls hitbox size
-      if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
-        @score += 1
+      if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
+        @score += 10
         @beep.play
         true
       else
@@ -162,21 +161,20 @@ end
 class Juice
   attr_reader :x, :y
 
-  def initialize
-  #   @animation = animation
-  #   @color = Gosu::Color.new(0xff_000000)
-  #   @color.red = rand(255 - 40) + 40
-  #   @color.green = rand(255 - 40) + 40
-  #   @color.blue = rand(255 - 40) + 40
-    # @juice = Gosu::Image.new("media/juice.bmp")
+  def initialize(animation)
+    @animation = animation
+    @color = Gosu::Color.new(0xff_000000)
+    @color.red = rand(255 - 40) + 40
+    @color.green = rand(255 - 40) + 40
+    @color.blue = rand(255 - 40) + 40
     @x = rand * 1500
     @y = 0
   end
 
-  # def draw
-    # img = @animation[Gosu::milliseconds / 100 % @animation.size];
-    # img.draw_rot(@x, @y, ZOrder::Stars, @y, 0.5, 0.5, 1, 1, @color, :add)
-  # end
+  def draw
+    img = @animation[Gosu::milliseconds / 150 % @animation.size];
+    img.draw_rot(@x, @y, ZOrder::Juices, @y, 0.5, 0.5, 1, 1, @color, :add)
+  end
 
   def update
     # Move towards bottom of screen
@@ -195,9 +193,9 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @gl_background = GLBackground.new
 
     @player = Player.new(400, 500)
+
+    @juice_anim = Gosu::Image::load_tiles("media/juice.png", 50, 50)
     @juices = Array.new
-    @juice = Gosu::Image.new("media/juice.png")
-    # @stars = Array.new
 
     @font = Gosu::Font.new(20)
   end
@@ -208,20 +206,20 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @player.accelerate if Gosu::button_down? Gosu::KbUp or Gosu::button_down? Gosu::GpUp
     @player.brake if Gosu::button_down? Gosu::KbDown or Gosu::button_down? Gosu::GpDown
 
-    # @player.collect_stars(@stars)
     @player.collect_juices(@juices)
+
     @juices.reject! { |juice| !juice.update }
 
     @gl_background.scroll
 
-#yk rand(number) controls how many stars fall at a time
-    @juices.push(@juice) if rand(100) == 0
+# rand(number) controls how many juices fall at a time
+    @juices.push(Juice.new(@juice_anim)) if rand(150) == 0
   end
 
   def draw
     @player.draw
-    # @juices.each { |juice| juice.draw }
-    @font.draw("Collected", 1200, 40, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    @juices.each { |juice| juice.draw }
+    @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
     @gl_background.draw(ZOrder::Background)
   end
 end
