@@ -216,6 +216,34 @@ class Question
   end
 end
 
+class Timer
+  attr_reader :hours
+  attr_reader :minutes
+  attr_reader :seconds
+
+  def initialize
+    @hours = 0
+    @minutes = 0
+    @seconds = 0
+    @last_time = Gosu::milliseconds()
+  end
+
+  def update
+    if (Gosu::milliseconds - @last_time) / 1000 == 1
+      @seconds += 1
+      @last_time = Gosu::milliseconds()
+    end
+    if @seconds > 59
+      @seconds = 0
+      @minutes += 1
+    end
+    if @minutes > 59
+      @hours += 1
+      @minutes = 0
+    end
+  end
+end
+
 
 class OpenGLIntegration < (Example rescue Gosu::Window)
   def initialize
@@ -234,6 +262,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @questions = Array.new
 
     @font = Gosu::Font.new(20)
+
+    @timer = Timer.new
   end
 
   def update
@@ -262,6 +292,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @stars.each { |star| star.draw }
     @questions.each { |question| question.draw }
     @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    @font.draw("Time: #{player.time}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
     @gl_background.draw(ZOrder::Background)
   end
 end
