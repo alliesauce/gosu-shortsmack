@@ -210,6 +210,32 @@ class Question
   end
 end
 
+class Timer
+
+  # def initialize
+  #   @time = 120
+  # end
+
+# def countdown
+#   @number = 120
+#     while @number > 0
+#       @time = Time.at(@number).strftime "%M:%S"
+#       sleep 1
+#       @number - 1
+#     end
+#   end
+# end
+# def countdown
+# t = Time.new(0)
+# countdown_time_in_seconds = 300 # change this value
+
+# countdown_time_in_seconds.downto(0) do |seconds|
+#   puts (t + seconds).strftime('%H:%M:%S')
+#   sleep 1
+# end
+# end
+end
+
 
 class OpenGLIntegration < (Example rescue Gosu::Window)
   def initialize
@@ -221,13 +247,14 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @player = Player.new(400, 500)
 
-    @juice_anim = Gosu::Image::load_tiles("media/juice_large.png", 100, 100)
+    @juice= Gosu::Image::load_tiles("media/juice_large.png", 100, 100)
     @juices = Array.new
 
     @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
     @questions = Array.new
 
     @font = Gosu::Font.new(20)
+    @timer = Timer.new
   end
 
   def update
@@ -247,8 +274,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @gl_background.scroll
 
 # rand(number) controls how many juices and questions fall at a time
-    @juices.push(Juice.new(@juice_anim)) if rand(250) == 0
-    @questions.push(Question.new(@question)) if rand(25) == 0
+    @juices.push(Juice.new(@juice)) if rand(250) == 0
+    @questions.push(Question.new(@question)) if rand(40) == 0
   end
 
   def draw
@@ -256,8 +283,15 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @juices.each { |juice| juice.draw }
     @questions.each { |question| question.draw }
     @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    # @font.draw("#{@timer.countdown} Seconds To Go", 1000, 20, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+if @player.score < 0
+  sleep 5
+end
+
     @gl_background.draw(ZOrder::Background)
   end
+
 end
 
 OpenGLIntegration.new.show if __FILE__ == $0
+
