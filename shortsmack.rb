@@ -354,6 +354,14 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @gl_background.draw(ZOrder::Background)
     # @life_image.draw(self, "media/bryan.bmp", false)
+
+    if @player.lives > 0
+      x = 10
+      @player.lives.times do
+        @life_image.draw(x, 40, 0)
+        x += 20
+      end
+    end
   end
 
   # def draw_lives
