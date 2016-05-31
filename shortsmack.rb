@@ -114,7 +114,7 @@ class Player
 
   def initialize(x, y)
     @image = Gosu::Image.new("media/bryan.bmp")
-    @rooster = Gosu::Sample.new("media/audio_formats/thankyou.wav")
+    @thankyou = Gosu::Sample.new("media/audio_formats/thankyou.wav")
     @becoss = Gosu::Sample.new("media/audio_formats/becoss.wav")
     @x, @y = x, y
     @score = 0
@@ -171,7 +171,7 @@ class Player
       if @alive
         if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
           @lives += 1
-          @rooster.play
+          @thankyou.play(volume = 1, speed = 1, looping = false)
            true
         else
           false
@@ -189,7 +189,7 @@ class Player
           # @score -= 50
           @player.kill
           # @lives -= 1
-          @becoss.play
+          @becoss.play(volume = 1, speed = 1, looping = false)
           true
         else
           false
@@ -294,18 +294,20 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @bgmusic.play(volume = 0.5, speed = 1, looping = true)
   end
 
-  def update
-    if button_down? Gosu::KbQ
+    def update
+      if button_down? Gosu::KbQ
       close
+    end
+
+    def button_down(id)
+      self.close if id == Gosu::Button::KbEscape
+      self.setup_game if id == Gosu::Button::KbR
     end
 
     if button_down? Gosu::KbS
       setup_game unless @game_in_progress
     end
 
-    # if button_down? Gosu::KbR
-    #   @game_in_progress = false
-    # end
 
     control_player unless @player.dead?
     @player.collect_juices(@juices)
@@ -338,9 +340,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     if @player.lives <= 0
       @font.draw("BRYAN I THOUGHT YOU WERE A WIZARD", 400, 150, 50, 2.0, 2.0, 0xffffffff)
-      # @font.draw("press 'r' to restart", 700, 320, 50, 1, 1, 0xffffffff)
-      @font.draw("press 'q' to quit", 675, 345, 50, 1, 1, 0xffffffff)
-      #sleep
+      @font.draw("Press 'r' to Try Again", 655, 320, 50, 1, 1, 0xffffffff)
+      @font.draw("Press 'q' to Quit", 675, 345, 50, 1, 1, 0xffffffff)
     end
 
     @score += 1 unless @player.dead?
