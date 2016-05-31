@@ -290,6 +290,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     # @font = Gosu::Font.new(20)
     # @timer = Timer.new
     @game_in_progress = true
+    @bgmusic = Gosu::Sample.new("media/audio_formats/smash.mp3")
+    @bgmusic.play(volume = 0.5, speed = 1, looping = true)
   end
 
   def update
