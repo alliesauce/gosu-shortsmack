@@ -3,6 +3,7 @@
 require 'rubygems'
 require 'gosu'
 require 'gl'
+require 'timers'
 
 WIDTH, HEIGHT = 1500,900
 # :fullscreen => true
@@ -146,7 +147,7 @@ class Player
     @image.draw(@x - @image.width / 2, @y - @image.height / 2, ZOrder::Player)
   end
 
-  #When a player dies, we subtract a life, then warp them back to the middle of the screen.
+  #When a player dies, we subtract a life, then warp them back to the middle of the screen, towards the bottom.
   def kill
     @lives -= 1
     @alive = false
@@ -159,7 +160,7 @@ class Player
     return @lives <= 0
   end
 
-  def warp(x=750,y=450)
+  def warp(x=750,y=800)
     # @velocity_x = @velocity_y = @angle = 0.0
     @x, @y = x, y
     @alive = true
@@ -203,7 +204,7 @@ end # end class Player
 
 # Also taken from the tutorial, but drawn with draw_rot and an increasing angle for extra rotation coolness!
 class Juice
-   attr_reader :x, :y, :angle
+  attr_reader :x, :y, :angle
 
   def initialize(image)
     @image = Gosu::Image.new("media/juice_large.png")
@@ -243,33 +244,32 @@ class Question
 end
 
 class Timer
+  attr_reader :minutes
+  attr_reader :seconds
+  def initialize(window)
+    @minutes = 0
+    @seconds = 0
+    @last_time = Gosu::milliseconds()
+  end
 
-  # def initialize
-  #   @time = 120
-  # end
-
-# def countdown
-#   @number = 120
-#     while @number > 0
-#       @time = Time.at(@number).strftime "%M:%S"
-#       sleep 1
-#       @number - 1
-#     end
-#   end
-# end
-# def countdown
-# t = Time.new(0)
-# countdown_time_in_seconds = 300 # change this value
-
-# countdown_time_in_seconds.downto(0) do |seconds|
-#   puts (t + seconds).strftime('%H:%M:%S')
-#   sleep 1
-# end
-# end
-end
-
+  def update
+    if (Gosu::milliseconds - @last_time) / 1000 == 1
+      @seconds += 1
+      @last_time = Gosu::milliseconds()
+    end
+    if @seconds > 59
+      @seconds = 0
+      @minutes += 1
+    end
+    if @minutes > 59
+      @minutes = 0
+    end
+  end
+end #end class Timer
 
 class OpenGLIntegration < (Example rescue Gosu::Window)
+  attr_reader :timer
+
   def initialize
     super WIDTH, HEIGHT
     self.caption = "Operation Shortsmack"
@@ -278,6 +278,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @game_in_progress = false
     @font = Gosu::Font.new(20)
     setup_game
+    @timer = Timer.new(self)
   end
 
   def setup_game
@@ -288,7 +289,6 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
     @questions = Array.new
     # @font = Gosu::Font.new(20)
-    # @timer = Timer.new
     @game_in_progress = true
   end
 
@@ -301,10 +301,6 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
       setup_game unless @game_in_progress
     end
 
-    # if button_down? Gosu::KbR
-    #   @game_in_progress = false
-    # end
-
     control_player unless @player.dead?
     @player.collect_juices(@juices)
 
@@ -316,8 +312,10 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @gl_background.scroll
 
-# rand(number) controls how many juices and questions fall at a time
-    @juices.push(Juice.new(@juice)) if rand(250) == 0
+    @timer.update
+
+    # rand(number) controls how many juices and questions fall at a time
+    @juices.push(Juice.new(@juice)) if rand(150) == 0
     @questions.push(Question.new(@question)) if rand(40) == 0
   end
 
@@ -359,20 +357,45 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
       x = 10
       @player.lives.times do
         @life_image.draw(x, 40, 0)
-        x += 20
+        x += 40
       end
     end
   end
-
-  # def draw_lives
-  #   return unless @player.lives > 0
-  #   x = 10
-  #   @player.lives.times do
-  #     @life_image.draw(x, 40, 0)
-  #     x += 20
-  #   en
-  # end
 end #class OpenGL
+
+class Window_PlayTime < OpenGLIntegration
+
+  def initialize(window, x, y, z)
+    super(window, x, y, 160, 70, 10)
+    @window = window
+    @font = Font.new(window ,@window.initial.font_name, @window.initial.font_size)
+    # colors
+  end
+
+  def adapt_time
+    if @window.timer.minutes < 10
+      @minutes_display = "0" + @window.timer.minutes.to_s
+    else
+      @minutes_display = @window.timer.minutes.to_s
+    end
+    if @window.timer.seconds < 10
+      @seconds_display = "0" + @window.timer.seconds.to_s
+    else
+      @seconds_display = @window.timer.seconds.to_s
+    end
+  end
+
+  def update
+    adapt_time
+    self.draw
+  end
+
+  def draw
+    self.drawBox(@x, @y, @width, @height, @z)
+    @font.draw("Play Time:", self.x+20, self.y+10, @z, 1, 1, @blue_text)
+    @font.draw_rel(@hours_display+":"+@minutes_display+":"+@seconds_display, self.x + @width - 15, self.y + 50, @z, 1.0, 0.5)
+  end
+end
 
 
 
