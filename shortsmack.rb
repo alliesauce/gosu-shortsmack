@@ -114,7 +114,8 @@ class Player
 
   def initialize(x, y)
     @image = Gosu::Image.new("media/bryan.bmp")
-    @beep = Gosu::Sample.new("media/beep.wav")
+    @rooster = Gosu::Sample.new("media/rooster.wav")
+    @pain = Gosu::Sample.new("media/pain.wav")
     @x, @y = x, y
     @score = 0
   end
@@ -147,7 +148,7 @@ class Player
     juices.reject! do |juice|
       if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
         @score += 10
-        @beep.play
+        @rooster.play
         true
       else
         false
@@ -159,7 +160,7 @@ class Player
     questions.reject! do |question|
       if Gosu::distance(@x, @y, question.x, question.y) < 100 then
         @score -= 50
-        @beep.play
+        @pain.play
         true
       else
         false
