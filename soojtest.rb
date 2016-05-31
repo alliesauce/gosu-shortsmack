@@ -110,12 +110,14 @@ class Player
   Speed = 7
 
   attr_reader :score
+  attr_reader :time
 
   def initialize(x, y)
     @image = Gosu::Image.new("media/bryan.bmp")
     @beep = Gosu::Sample.new("media/beep.wav")
     @x, @y = x, y
     @score = 0
+    @time = 0
   end
 
   def move_left
@@ -221,7 +223,7 @@ class Timer
   attr_reader :minutes
   attr_reader :seconds
 
-  def initialize
+  def initialize(window)
     @hours = 0
     @minutes = 0
     @seconds = 0
@@ -241,6 +243,11 @@ class Timer
       @hours += 1
       @minutes = 0
     end
+  end
+
+  def draw(animation)
+    timer = @animation[Gosu::milliseconds / 1000 % @animation.size];
+    timer.draw
   end
 end
 
@@ -282,6 +289,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @gl_background.scroll
 
+    @timer.update
+
 # rand(number) controls how many stars and questions fall at a time
     @stars.push(Star.new(@star_anim)) if rand(2) == 0
     @questions.push(Question.new(@question_anim)) if rand(2) == 0
@@ -291,8 +300,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @player.draw
     @stars.each { |star| star.draw }
     @questions.each { |question| question.draw }
-    @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
-    @font.draw("Time: #{player.time}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    # @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
+    @timer.draw
     @gl_background.draw(ZOrder::Background)
   end
 end

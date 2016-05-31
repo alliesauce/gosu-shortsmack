@@ -10,6 +10,7 @@ WIDTH, HEIGHT = 1500,900
 
 module ZOrder
   Background, Stars, Questions, Player, Timer, UI = *0..4
+  Background, Juices, Questions, Player, UI = *0..4
 end
 
 # The only really new class here.
@@ -142,9 +143,9 @@ class Player
     @image.draw(@x - @image.width / 2, @y - @image.height / 2, ZOrder::Player)
   end
 
-  def collect_stars(stars)
-    stars.reject! do |star|
-      if Gosu::distance(@x, @y, star.x, star.y) < 35 then
+  def collect_juices(juices)
+    juices.reject! do |juice|
+      if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
         @score += 10
         @beep.play
         true
@@ -156,7 +157,7 @@ class Player
 
   def avoid_questions(questions)
     questions.reject! do |question|
-      if Gosu::distance(@x, @y, question.x, question.y) < 35 then
+      if Gosu::distance(@x, @y, question.x, question.y) < 100 then
         @score -= 50
         @beep.play
         true
@@ -170,7 +171,7 @@ end # end class Player
 
 # Also taken from the tutorial, but drawn with draw_rot and an increasing angle
 # for extra rotation coolness!
-class Star
+class Juice
   attr_reader :x, :y
 
   def initialize(animation)
@@ -184,8 +185,8 @@ class Star
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 100 % @animation.size];
-    img.draw_rot(@x, @y, ZOrder::Stars, @y, 0.5, 0.5, 1, 1, @color, :add)
+    img = @animation[Gosu::milliseconds / 150 % @animation.size];
+    img.draw_rot(@x, @y, ZOrder::Juices, @y, 0.5, 0.5, 1, 1, @color, :add)
   end
 
   def update
@@ -197,17 +198,17 @@ class Star
 end
 
 class Question
-  attr_reader :x, :y
+  attr_reader :x, :y, :angle
 
-  def initialize(animation)
-    @animation = animation
+  def initialize(image)
+    @image = Gosu::Image.new("media/wat.png")
     @x = rand * 1500
     @y = 0
+    @angle = rand(360)
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 100 % @animation.size];
-    img.draw_rot(@x, @y, ZOrder::Questions, @y, 0.5, 0.5, 1, 1)
+    @image.draw_rot(@x, @y, ZOrder::Questions, @angle)
   end
 
   def update
@@ -227,10 +228,10 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @player = Player.new(400, 500)
 
-    @star_anim = Gosu::Image::load_tiles("media/star.png", 25, 25)
-    @stars = Array.new
+    @juice_anim = Gosu::Image::load_tiles("media/juice.png", 50, 50)
+    @juices = Array.new
 
-    @question_anim = Gosu::Image::load_tiles("media/gem.png", 25, 25)
+    @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
     @questions = Array.new
 
     @font = Gosu::Font.new(20)
@@ -242,9 +243,9 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @player.accelerate if Gosu::button_down? Gosu::KbUp or Gosu::button_down? Gosu::GpUp
     @player.brake if Gosu::button_down? Gosu::KbDown or Gosu::button_down? Gosu::GpDown
 
-    @player.collect_stars(@stars)
+    @player.collect_juices(@juices)
 
-    @stars.reject! { |star| !star.update }
+    @juices.reject! { |juice| !juice.update }
 
     @player.avoid_questions(@questions)
 
@@ -252,14 +253,14 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @gl_background.scroll
 
-# rand(number) controls how many stars and questions fall at a time
-    @stars.push(Star.new(@star_anim)) if rand(2) == 0
-    @questions.push(Question.new(@question_anim)) if rand(2) == 0
+# rand(number) controls how many juices and questions fall at a time
+    @juices.push(Juice.new(@juice_anim)) if rand(150) == 0
+    @questions.push(Question.new(@question)) if rand(50) == 0
   end
 
   def draw
     @player.draw
-    @stars.each { |star| star.draw }
+    @juices.each { |juice| juice.draw }
     @questions.each { |question| question.draw }
     @font.draw("Score: #{@player.score}", 10, 10, ZOrder::UI, 1.0, 1.0, 0xff_ffff00)
     @gl_background.draw(ZOrder::Background)
