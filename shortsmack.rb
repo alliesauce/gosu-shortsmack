@@ -16,13 +16,13 @@ end
 # Draws a scrolling, repeating texture with a randomized height map.
 class GLBackground
   # Height map size
-  POINTS_X = 7
-  POINTS_Y = 7
+  POINTS_X = 12
+  POINTS_Y = 12
   # Scrolling speed
   SCROLLS_PER_STEP = 50
 
   def initialize
-    @image = Gosu::Image.new("media/hacker_code.jpg", :tileable => true)
+    @image = Gosu::Image.new("media/hacker_code_blue.jpg", :tileable => true)
     @scrolls = 0
     @height_map = Array.new(POINTS_Y) { Array.new(POINTS_X) { rand } }
   end
@@ -144,7 +144,7 @@ class Player
 
   def collect_juices(juices)
     juices.reject! do |juice|
-      if Gosu::distance(@x, @y, juice.x, juice.y) < 35 then
+      if Gosu::distance(@x, @y, juice.x, juice.y) < 50 then
         @score += 10
         @beep.play
         true
@@ -156,7 +156,7 @@ class Player
 
   def avoid_questions(questions)
     questions.reject! do |question|
-      if Gosu::distance(@x, @y, question.x, question.y) < 100 then
+      if Gosu::distance(@x, @y, question.x, question.y) < 150 then
         @score -= 50
         @beep.play
         true
@@ -171,27 +171,21 @@ end # end class Player
 # Also taken from the tutorial, but drawn with draw_rot and an increasing angle
 # for extra rotation coolness!
 class Juice
-  attr_reader :x, :y
+   attr_reader :x, :y, :angle
 
-  def initialize(animation)
-    @animation = animation
-    @color = Gosu::Color.new(0xff_000000)
-    @color.red = rand(255 - 40) + 40
-    @color.green = rand(255 - 40) + 40
-    @color.blue = rand(255 - 40) + 40
+  def initialize(image)
+    @image = Gosu::Image.new("media/juice_large.png")
     @x = rand * 1500
     @y = 0
+    @angle = rand(360)
   end
 
   def draw
-    img = @animation[Gosu::milliseconds / 150 % @animation.size];
-    img.draw_rot(@x, @y, ZOrder::Juices, @y, 0.5, 0.5, 1, 1, @color, :add)
+    @image.draw_rot(@x, @y, ZOrder::Juices, @angle)
   end
 
   def update
-    # Move towards bottom of screen
-    @y += 5
-    # Return false when out of screen (gets deleted then)
+    @y += 10
     @y < 950
   end
 end
@@ -227,7 +221,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
 
     @player = Player.new(400, 500)
 
-    @juice_anim = Gosu::Image::load_tiles("media/juice.png", 50, 50)
+    @juice_anim = Gosu::Image::load_tiles("media/juice_large.png", 100, 100)
     @juices = Array.new
 
     @question = Gosu::Image::load_tiles("media/wat.png", 250, 250)
@@ -253,8 +247,8 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @gl_background.scroll
 
 # rand(number) controls how many juices and questions fall at a time
-    @juices.push(Juice.new(@juice_anim)) if rand(150) == 0
-    @questions.push(Question.new(@question)) if rand(50) == 0
+    @juices.push(Juice.new(@juice_anim)) if rand(250) == 0
+    @questions.push(Question.new(@question)) if rand(25) == 0
   end
 
   def draw
