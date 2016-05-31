@@ -277,6 +277,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     @life_image = Gosu::Image.new("media/bryan.bmp")
     @game_in_progress = false
     @font = Gosu::Font.new(20)
+    @celine = Gosu::Sample.new("media/celine.m4a")
     setup_game
   end
 
@@ -290,6 +291,7 @@ class OpenGLIntegration < (Example rescue Gosu::Window)
     # @font = Gosu::Font.new(20)
     # @timer = Timer.new
     @game_in_progress = true
+    @celine.play
   end
 
   def update
